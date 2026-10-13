@@ -10,7 +10,7 @@
 
 ​		很少有先前的工作研究**点集**上的深度学习。PointNet [20] 是直接处理**点集**的先驱性工作。PointNet 的基本思想是学习每个点的**空间编码**（spatial encoding），然后将所有单个点的特征**聚合**（aggregate）为全局**点云**特征（global point cloud signature）。在设计上，PointNet 无法捕捉由**度量**（metric）诱导的**局部结构**（local structure）。然而，利用**局部结构**已被证明对**卷积架构**（convolutional architectures）的成功至关重要。卷积神经网络（CNN）以**规则网格**（regular grids）上定义的数据为输入，能够沿着**多分辨率层级**（multi-resolution hierarchy）逐步捕捉尺度越来越大的特征。在较低层级，神经元具有较小的**感受野**（receptive fields），而在较高层级则具有较大的**感受野**。沿层级抽象**局部模式**（local patterns）的能力使其对未见案例具有更好的**泛化能力**（generalizability）。
 
-​		【★】我们引入一种**分层神经网络**（hierarchical neural network），命名为 PointNet++，以分层方式处理度量空间（metric space）中采样的点集。PointNet++ 的总体思路简单：首先通过底层空间的距离度量（distance metric）将点集划分为重叠的**局部区域**（local regions）。与卷积神经网络（CNNs）类似，我们从小型**局部邻域**中提取捕捉精细几何结构（geometric structures）的**局部特征**（local features）；这些局部特征进一步被分组为更大的单元，并通过处理生成更高级别的特征。此过程重复进行，直至获得整个点集的特征。
+​		我们引入一种**分层神经网络**（hierarchical neural network），命名为 PointNet++，以分层方式处理度量空间（metric space）中采样的点集。PointNet++ 的总体思路简单：首先通过底层空间的距离度量（distance metric）将点集划分为重叠的**局部区域**（local regions）。与卷积神经网络（CNNs）类似，我们从小型**局部邻域**中提取捕捉精细几何结构（geometric structures）的**局部特征**（local features）；这些局部特征进一步被分组为更大的单元，并通过处理生成更高级别的特征。此过程重复进行，直至获得整个点集的特征。
 
 ​		PointNet++ 的设计需要解决两个问题：如何生成点集的**划分**（partitioning），以及如何通过**局部特征学习器**（local feature learner）抽象点集或局部特征。`这两个问题是相关的，因为点集的划分必须在各个分区之间产生共同的结构，以便像在**卷积场景**（convolutional setting）中一样共享局部特征学习器的权重`。我们选择**PointNet**作为局部特征学习器。如该工作所示，PointNet 是处理无序点集以进行**语义特征提取**（semantic feature extraction）的有效架构。此外，该架构对输入数据损坏（input data corruption）具有鲁棒性。作为基本构建块，PointNet 将局部点集或特征抽象为更高级别的表示。从这个角度看，PointNet++ 在输入集的**嵌套划分**（nested partitioning）上递归应用 PointNet。
 
@@ -199,7 +199,7 @@ $  f(x_1, x_2, \ldots, x_n) = \gamma\left( \max_{i=1,\ldots,n} \{ h(x_i) \} \rig
 
 
 
-___
+
 
 ___
 
