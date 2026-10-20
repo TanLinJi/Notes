@@ -205,3 +205,167 @@ No.235 [二叉搜索树的最近公共祖先](https://leetcode.cn/problems/lowes
 
 ```
 
+
+
+NO.513 [找树左下角的值](https://leetcode.cn/problems/find-bottom-left-tree-value/)
+
+```python
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def findBottomLeftValue(self, root: TreeNode | None) -> int:
+        # 方法1：用层序遍历，返回最后一层的第一个节点
+        
+        # 方法2：层序遍历改变方向，从右到左遍历，这个时候就是层序遍历的最后一个节点
+        q = deque([root])
+        while q:
+            node = q.popleft()
+            if node.right:
+                q.append(node.right)
+            if node.left:
+                q.append(node.left)
+            if not q:
+                return node.val
+```
+
+
+
+### 回溯问题
+
+回溯问题的基本动作：做出选择 → 继续向下探索 → 撤销选择 → 尝试下一个选择
+
+用两个数组来描述当前状态：
+
+`path:` 当前已经选择的元素。例如：`path = [1, 2]`表示当前选出的子集是`[1,2]`
+
+`start:` 接下来允许从哪个下标开始选择。例如：path = [1]， start = 1，已经选择了 `1`，接下来只能从下标 `1` 开始继续选择。
+
+因此可以定义：`def backtrack(start):` 在当前 `path` 的基础上，从下标 `start` 开始，尝试继续加入元素，找出所有可能的子集。
+
+```python
+def backtrack(状态):
+    if 当前状态满足答案要求:
+        保存当前答案的副本
+
+    if 当前状态无法继续:
+        return
+
+    for 选择 in 当前可选范围:
+        做出选择
+        backtrack(更新后的状态)
+        撤销选择
+```
+
+![1792498221916](LeetCode.assets/1792498221916.png)
+
+![1792133458246](LeetCode.assets/1792133458246.png)
+
+![1792133508821](LeetCode.assets/1792133508821.png)
+
+注意，这里的 $i$ 的含义不是第 $i$ 个，而是 >=i 的这些部分还需要枚举。
+
+然后，枚举了一个字母后，下一个子问题是什么，枚举了第i个过后，剩下的就是 >= i+1的这些部分了。
+
+`子集型回溯：`每个元素都可以选或者不选。
+
+题目，求 [1，2] 的子集：
+
+![1792393077117](LeetCode.assets/1792393077117.png)
+
+NO.78 [子集](https://leetcode.cn/problems/subsets/)
+
+```python
+
+```
+
+NO.17: [电话号码的字母组合](https://leetcode.cn/problems/letter-combinations-of-a-phone-number/description/)
+
+```python
+# 枚举，让下标和数字对应起来
+MAPPING = ["","","abc","def","ghi","jkl","mno","pqrs","tuv","wxyz"]
+class Solution:
+    def letterCombinations(self, digits: str) -> list[str]:
+        n = len(digits)
+        ans = []
+        path = [''] * n  # 每个path都是一个长度为n的数组
+        def dfs(i): # dfs（i） 表示下标大于等于i的，还需要枚举，所以是从dfs(i)递归到dfs(i+1)
+            if i==n:  # 已经达到最后一个数字，可以结束了(因为要求生成的字符串的长度和输入的字符串长度一致)
+                ans.append(''.join(path))
+                return
+            for c in MAPPING[int(digits[i])]:  # 需要枚举第i个数字有哪些字母
+                path[i] = c
+                dfs(i+1)  # 这里递归
+        dfs(0)
+        return ans        
+```
+
+### 动态规划
+
+No.198 [打家劫舍](https://leetcode.cn/problems/house-robber/description/)
+
+```python
+class Solution:
+    def rob(self, nums: List[int]) -> int:
+        # 动态规划版本
+        # n = len(nums)
+        # if n == 1:
+        #     return nums[0]
+        # dp = [''] * n
+        # dp[0] = nums[0]
+        # dp[1] = max(dp[0], nums[1])
+        # for i in range(2,n):
+        #     dp[i] = max(dp[i-1], dp[i-2] + nums[i])
+        # return dp[n-1]
+        
+        # 动态规划的优化
+        n = len(nums)
+        if n==1:
+            return nums[0]
+        f1 = nums[0]
+        f2 = max(nums[0],nums[1])
+        for i in range(2, n):
+            f = max(f2, f1 + nums[i])
+            f1 = f2
+            f2 = f
+        return f2
+
+        # 回溯版本（时间是指数级别的，这样写会超市）
+        # n = len(nums)
+        # def dfs(i):
+        #     if i<0:
+        #         return 0
+        #     res = max(dfs(i-1), dfs(i-2) + nums[i])
+        #     return res
+        # return dfs(n-1)
+
+        # 回溯版本的优化（可以把重复的步骤存下来，下次就不用重复计算了）
+        n = len(nums)
+        cache = [-1] * n
+
+        def dfs(i):
+            if i<0:
+                return 0
+            if cache[i] != -1:  # 说明之前计算过了，可以直接拿出来用
+                return cache[i]
+            cache[i] = max(dfs(i-1), dfs(i-2) + nums[i])
+            return cache[i]
+
+        return dfs(n-1)
+    
+        # 递推（自底向上计算）
+        n = len(nums)
+        f = [0] * (n+2) # 因为这里多用了两个数组空间，因此，不用特殊处理前两个数值
+        for i,x in enumerate(nums):
+            f[i+2] = max(f[i+1], f[i]+x)
+        return f[n+2]
+```
+
+0-1背包问题和完全背包问题，是 “选或不选” 这类题目的重要代表
+
+![1792496351703](LeetCode.assets/1792496351703.png)
+
+![1792496384013](LeetCode.assets/1792496384013.png)
