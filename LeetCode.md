@@ -585,7 +585,7 @@ class Solution:
 
 有n种物品，每种物品可以选无数次，第 i 种物品的体积为 w[i], 价值为 v[i], 求体积和不超过 capacity 的最大价值和
 
-No.322 [零钱兑换](https://leetcode.cn/problems/coin-change/description/)
+##### No.322 [零钱兑换](https://leetcode.cn/problems/coin-change/description/)
 
 方法1，完全背包做法
 
@@ -634,6 +634,258 @@ class Solution:
 
 
 
-### 最长公共子序列（LCS）
+### No.1143 [最长公共子序列（LCS）](https://leetcode.cn/problems/longest-common-subsequence/)
 
 在算法题中，子数组和子串是连续的，但是子序列是可以不连续的
+
+```python
+class Solution:
+    def longestCommonSubsequence(self, text1: str, text2: str) -> int:
+        n = len(text1)
+        m = len(text2)
+
+        @cache
+        def dfs(i, j):
+            # 其中一个字符串为空
+            if i<0 or j<0:
+                return 0
+            
+            # 如果此时两个字符相等，可以继续看两者剩余的
+            if text1[i] == text2[j]:
+                 return dfs(i-1, j-1) + 1
+            # 如果不等，分别移动各自的指针, 因为是求最长，所以是取最大值
+            else:
+                return max(dfs(i-1,j), dfs(i, j-1))
+        
+        return dfs(n-1, m-1)
+
+```
+
+法2：改用递推的形式来做
+
+```python
+class Solution:
+    def longestCommonSubsequence(self, text1: str, text2: str) -> int:
+        n = len(text1)
+        m = len(text2)
+
+        f = [[0] * (m+1) for _ in range(n+1)]  # m+1列，n+1行
+
+        for i,x in enumerate(text1):
+            for j,y in enumerate(text2):
+                if x == y:
+                    f[i+1][j+1] = f[i][j] + 1
+                else:
+                    f[i+1][j+1] = max(f[i][j+1], f[i+1][j])
+
+        
+        return f[n][m]
+```
+
+### NO.72 [编辑距离](https://leetcode.cn/problems/edit-distance/)
+
+```
+class Solution:
+    def minDistance(self, word1: str, word2: str) -> int:
+        n = len(word1)
+        m = len(word2)
+
+        @cache
+        def dfs(i, j):
+            # 一个字符串为空，
+            # i<0, 比如 word1 = ""  而 word2 = "abc"  比如插入三次，即 j+1
+            if i<0:
+                return j+1
+            # 比如  word1 = "abc" ,而word2 = "" ，比如删除三次, 即 i+1
+            if j<0:
+                return i+1
+
+            # 相等的时候   
+            if word1[i] == word2[j]:
+                return dfs(i-1,j-1)
+            else:
+                # 三种方法
+                # 1， 插入（需要区分，容易搞混）
+                # dfs(i,j-1) + 1
+
+                # 2. 删除
+                # dfs(i-1, j) + 1
+
+                # 3. 替换
+                # dfs(i-1, j-1) + 1
+                return min(dfs(i-1,j-1), dfs(i-1,j),dfs(i,j-1)) + 1
+        
+        return dfs(n-1,m-1)
+```
+
+法1：`dfs(i, j)` 表示：将 `word1` 的前 `i+1` 个字符转换为 `word2` 的前 `j+1` 个字符，所需要的最少操作次数。
+
+三种情况：
+
+`1. 替换：dfs(i-1, j-1) + 1`
+
+这个操作比较容易理解。
+
+例如：
+
+```python
+word1 = "abc"
+word2 = "abd"
+```
+
+当前：`dfs(2, 2)`
+
+因为：
+
+```python
+word1[2] = "c"
+word2[2] = "d"
+```
+
+两个字符不同。
+
+我们可以把 `word1` 最后一个字符 `"c"` 替换为 `"d"`。
+
+abc
+
+abd
+
+将 c 替换为 d
+
+
+
+替换最后一个字符后，剩下的问题是：
+
+```
+ab` → `ab
+```
+
+对应 `dfs(1, 1)`。
+
+因此：替换对应 `dfs(i-1, j-1) + 1`
+
+为什么两个下标都减一？
+
+因为我们已经通过替换，让 `word1[i]` 与 `word2[j]` 对应上了，所以接下来只需要考虑两个字符串各自前面的部分。
+
+`2. 删除：dfs(i-1, j) + 1`
+
+假设：
+
+```
+word1 = "abc"
+word2 = "ab"
+```
+
+我们想把 `"abc"` 转换成 `"ab"`。
+
+最容易想到的操作就是删除 `"c"`。
+
+```
+abc
+ab
+```
+
+删除 `c` 后，剩下的问题是：
+
+```
+ab` → `ab
+```
+
+对应 `dfs(1, 1)`。
+
+因此：删除对应 `dfs(i-1, j) + 1`
+
+
+
+为什么只有 `i` 减一？
+
+因为删除的是 `word1` 的最后一个字符。
+
+- `word1` 少了一个需要处理的字符，所以 `i-1`。
+- `word2` 没有发生任何变化，仍然需要匹配它的全部目标前缀，所以 `j` 不变。
+
+特别注意：这里的 `j` 不变，不是因为我们允许修改 `word2`，而是因为 `word2` 本来就不需要修改。
+
+`3. 插入：dfs(i, j-1) + 1`
+
+这是你代码中理解有误的地方，也是三种操作中最容易搞混的。
+
+假设：
+
+```
+word1 = "ab"
+word2 = "abc"
+```
+
+我们需要将 `"ab"` 转换成 `"abc"`。
+
+显然，只需要在 `word1` 的末尾插入 `"c"`。
+
+```
+ab
+abc
+```
+
+插入 c
+
+
+
+在 `word1` 末尾插入 `c` 之前，原来的 `ab` 需要匹配目标字符串的 `ab`。
+
+所以剩下的问题是：
+
+```
+ab` → `ab
+```
+
+对应 `dfs(1, 1)`。
+
+而当前原始问题为：
+
+```
+dfs(1, 2)
+```
+
+
+
+因此，插入操作的状态转移应该是： `dfs(i, j-1) + 1`
+
+
+
+为什么这里是 `j-1`，而不是 `i-1`？
+
+因为新插入的字符负责匹配 `word2[j]`，而 `word1` 原本的字符一个都没有被删除或者消耗。
+
+也就是说：
+
+- `word1` 原来的前 `i+1` 个字符仍然需要处理，因此 `i` 不变。
+- `word2[j]` 已经由我们新插入的字符来匹配，因此只需要考虑 `word2` 的前 `j` 个字符，即 `j-1`。
+
+注意，`j-1` 并不是删除 `word2` 的字符，而是将 `word2[j]` 这个目标字符交给插入操作处理，因此剩下的子问题不再需要考虑它。
+
+
+
+法2，递推
+
+```python
+class Solution:
+    def minDistance(self, word1: str, word2: str) -> int:
+        n = len(word1)
+        m = len(word2)
+
+        f = [[inf] * (m+1) for _ in range(n+1)]
+        # 注意初始化
+        # f[0][j] 都应该为 j
+        # f[i][0] 都应该为 i
+        f[0] = list(range(m+1))
+        for i,x in enumerate(word1):
+            f[i+1][0] = i+1 # 这是初始化（因为这里下标是加了1）
+            for j,y in enumerate(word2):
+                if x == y:
+                    f[i+1][j+1] = f[i][j]
+                else:
+                    f[i+1][j+1] = min(f[i+1][j],f[i][j+1],f[i][j]) + 1
+        return f[n][m]        
+```
+
