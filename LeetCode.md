@@ -889,3 +889,369 @@ class Solution:
         return f[n][m]        
 ```
 
+
+
+### No. 300 [最长递增子序列](https://leetcode.cn/problems/longest-increasing-subsequence/)
+
+用递推的思想来解决：
+
+```python
+class Solution:
+    def lengthOfLIS(self, nums: list[int]) -> int:
+        n = len(nums)
+
+        # dfs(i) 表示以 nums[i] 结尾的最长递增子序列的长度
+        @cache
+        def dfs(i):
+            res = 0
+            for j in range(i):
+                if nums[j] < nums[i]:
+                    res = max(res, dfs(j))
+            return res + 1 # 这里的 1 就表示nums[i]
+        
+        ans = 0
+
+        for i in range(n):
+            ans = max(ans, dfs(i))
+
+        return ans
+
+```
+
+使用动态规划进行优化:
+
+```python
+class Solution:
+    def lengthOfLIS(self, nums: list[int]) -> int:
+        n = len(nums)
+
+        f = [0] * n
+        
+        for i in range(n):
+            for j in range(i):
+                if nums[j] < nums[i]:
+                    f[i] = max(f[i], f[j])
+            f[i] += 1
+    
+        return max(f)
+
+```
+
+
+
+# 定长滑动窗口
+
+### NO.1456 [定长子串中元音的最大数目](https://leetcode.cn/problems/maximum-number-of-vowels-in-a-substring-of-given-length/)
+
+【分析】子串要求字符在原字符串中连续出现，并且保持原来的顺序。
+
+```python
+
+```
+
+
+
+### 相向双指针
+
+双指针的引用场景：
+
+1. 单调性：left移动时，子数组的和不断减小；right移动时，子数组的和不断扩大
+2. 在移动指针的时候，while从满足要求到不满足要求
+
+##### NO.167 两数之和（Ⅱ）
+
+【解析】数组是已经有序的，右指针往里缩，只会让和更小；左指针往里缩，只会让和更大
+
+时间复杂度 O(n)   空间复杂度 O(1)
+
+```python
+class Solution:
+    def twoSum(self, numbers: List[int], target: int) -> List[int]:
+        n = len(numbers)
+        left = 0
+        right = n - 1
+        while left < right:
+            s = numbers[left] + numbers[rgiht]
+            if s==target:
+                return [left + 1, right + 1]
+            elif s>target:
+                right -= 1
+            else:
+                left += 1
+        return []
+```
+
+##### NO.15 三数之和
+
+【解析】如果数组有序，就可以用相向双指针了，所以这里可以先直接对数组进行一次排序
+
+题目还说，三元组的顺序不重要(不能重复)，因此相当于要求 i<j<k。
+
+然后这个题就可以枚举 nums[i], 然后让其和等于 -num[i], 这样就转换成了上一个题目
+
+时间复杂度 O(n^2); 空间复杂度 O(1)
+
+```python
+class Soultion:
+    def threeSum(self, nums: List[int]) -> List[List[int]]:
+        nums.sort()  # 先直接对原来的数组进行排序，在数组有序的情况下，可以使用双向双指针
+        ans = []
+        n = len(nums)
+        for i in range(n-2): # 遍历nums[i], 后边最后要留两个数 n-1 和 n-2, 所以遍历到 n-3. range是左闭右开
+            x = nums[i]
+
+            if x + nums[i+1] + nums[i+2] > 0: #如果和最小的两个数加起来都大于0，因为后边的数都比这两个数大，所以不可能再有等于 0 的情况了
+                break
+            
+            if x + nums[-2] + nums[-1] <0:  # 如果和最大的两个数加起来都小于0， 前边的数都比这个数小，就不会再有等于 0 的情况了，可以继续看下一个数
+                continue
+            
+            if i>0 and x == nums[i-1]:  # 如果和上一个相同（因为已经排好序了，不能有重复的三元组，所以需要直接跳过）
+                continue
+            j = i + 1
+            k = n - 1
+            while j < k:
+                s = nums[j] + nums[k] + x
+                if s == 0:
+                    ans.append([x,nums[j],nums[k]])
+                    
+                    # 注意，这里还需要把重复的 j 和重复的 k 跳过
+                    j += 1
+                  	while j<k and nums[j] == nums[j-1]:
+                        j += 1
+                    k -= 1
+                    while j<k and nums[k] == nums[k+1]:
+                        k -= 1
+                elif s < 0:
+                    j += 1
+                else:
+                    k -= 1
+        
+        return ans  
+```
+
+##### NO.11 盛最多水的容器
+
+【解析】依然使用相向双指针的思想，以最短的为基准，进行移动；容器的高度取决于最短的那方，容器的宽度取决于两边的距离
+
+时间复杂度：O(n) ; 空间复杂度 O(1)
+
+```python
+class Solution:
+    def maxArea(self, height: list[int]) -> int:
+        left = 0
+        right = len(height) - 1
+        ans = 0
+        while left < right:
+            area = (right - left) * min(height[left], height[right])
+            ans = max(ans,area)
+            
+            if height[left] < height[right]:
+                left += 1
+            else:
+                right -= 1
+        return ans
+```
+
+##### NO.42 接雨水
+
+【解析】假设每个位置都有一个宽度是 1 的桶，但是高度不确定，高度需要计算该位置左边的木板的高度和右边的木板的高度，然后取最小值。而左边木板的高度就等于该位置左边所有木板的最大高度，右边也同理，取决于右边所有木板的最大高度。然后把每个位置的节水量加起来就是最终的答案。
+
+```python
+# 方法 1 ： 用两个额外的数组来存储 该位置对应的前缀最大值和后缀最大值
+# 时间复杂度：O(n)
+# 空间复杂度：O(n)
+class Solution:
+    def trap(self, height:List[int]) -> int:
+        n = len(height)
+        pre_max = [0] * n  # 前缀最大值
+        pre_max[0] = height[0]  # 初始化第 0 项
+        for i in range(n - 1):
+            pre_max[i+1] = max(pre_max[i], height[i+1])
+            
+        suf_max = [0] * n  # 后缀最大值
+        suf_max[-1] = height[-1] # 初始化最后一项
+        for i in range(n-2,-1,-1): # 从 n-2 一直枚举到 0
+            suf_max[i] = max(suf_max[i+1], height[i])
+        
+        ans = 0
+        for i in range(n):
+            h = min(suf_max[i],pre_max[i])  # 两侧木板的高度
+            vol = h - height[i] if h>height[i] else 0  # 其实不用判断，因为两侧木板的高度不会低于自己的高度
+            ans += vol
+	
+        return ans
+```
+
+```python
+# 方法 2 ： 使用相向双指针来优化 前缀最大值 和 后缀最大值 ， 不需要完整记录数组
+# 时间复杂度：O(n)
+# 空间复杂度：O(1)
+class Solution:
+    def trap(self, height:List[int]) -> int:
+        n = len(height)
+        left = 0
+        right = n - 1
+        pre_max = 0
+        suf_max = 0
+        ans = 0
+        while left <= right: # 注意这里取等，因为两者相等的时候，是可以算这个位置可以接的雨水的容量的
+            # 先分别更新 前缀最大值 和 后缀最大值
+            pre_max = max(pre_max, height[left])
+            suf_max = max(suf_max, height[right])
+            
+            if pre_max < suf_max: # 如果前缀最大值更小，那么左边 left 位置的容量就确定了
+                ans += pre_max - height[left] # 还是和方法 1 一个道理，这里不用判断会不会比当前木板高度更低，这是不可能的，
+                left += 1
+            else:		# 如果后缀最大值更小，那么右边 right 位置的容量就确定了
+                ans += suf_max - height[right]  
+                right -=1
+
+        return ans
+```
+
+### 滑动窗口
+
+判定可以使用滑动窗口的条件：
+
+1. 题目要求的研究对象是连续区间：连续子数组，子串，长度为 K 的连续区间，满足某些条件的连续判断。 （注意，子序列是允许不连续，不能直接使用普通的滑动窗口）
+2. 窗口信息可以随着指针移动而更新
+3. 左指针能够一直向右移动，而不需要回退
+
+##### NO. 209 长度最小的子数组（也是双指针）
+
+【解析】数组元素有个性质是，数组的元素都是正数；可以通过枚举右断点，右移左端点的方式进行计算
+
+时间复杂度：O(n)
+
+空间复杂度：O(1)
+
+```python
+class Solution:
+    def minSubArrayLen(self, target:int, nums:List[int]) -> int:
+        n = len(nums)
+        left = 0
+        right = 0
+        ans = n + 1	# 由于这个题的答案最大是 n， 所以可以初始化成 n + 1； 或者直接初始化成 inf
+        s = 0  # 记录子区间的和
+        for right, x in enumerate(nums):  # 枚举子数组的右端点
+            s += x
+            
+            # 开始移动左端点
+            # 不用判断 left<=right 的原因：
+            # 假设 left == rgiht, s-nums[left]的值为0， 而题目的 target是正整数，所以这个条件不会成立，这个条件就足够了
+            while s-nums[left] >= target:  # 判断能够继续缩小窗口
+                s -= nums[left]
+                left += 1
+                
+            if s >= target:  # 判断当前窗口是否满足要求
+                ans = min(ans, right - left + 1)
+        return ans if ans<=n else 0
+```
+
+##### NO.713 乘积小于 k 的子数组
+
+【解析】子数组必须连续，数组中的元素都是正整数，所以可以使用滑动窗口解题
+
+以 right 为右端点，满足要求的连续子数组；假设此时左端点为 left， 此时left到right区间内，满足要求的子数组的个数为：right - left + 1
+
+另外，题目的数组元素都是正数，所以 k<=1 是不可能的；k=1时，数组元素最少是1，不存在严格小于 k =1 的情况
+
+时间复杂度：O(n)
+
+空间复杂度：O(1)
+
+```python
+class Solution:
+    def numSubarrayProductLessThanK(self, nums:List[int], k:int) -> int:
+        if k<=1:
+            return 0
+        
+        n = len(nums)
+        left = 0
+        ans = 0
+        prod = 1
+        for right,x in enumerate(nums):
+            # 第一步：扩大窗口
+            prod *= x
+			
+            # 第二步：缩小窗口，直到乘积合法
+            while prod >= k:
+                prod //= nums[left]
+                left += 1
+            # 第三步：统计以 right 为结尾的合法子数组    
+            ans += right - left + 1    
+        return ans
+```
+
+NO.3 无重复字符的最长子串
+
+【解析】关键是怎么判断是否有重复字符，可以用一个hash表来记录字符出现的次数
+
+时间复杂度：O(n)
+
+空间复杂度：O(1)  # 因为题目的字符由英文字母，数字，符号和空格组成，这是有限的，O(128)
+
+```python
+class Solution(object):
+    def lengthOfLongestSubstring(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        ans = 0
+        cnt = Counter()  # hashmap key:char value:int
+        left = 0
+        for right,c in enumerate(s):  # 找到以 right 为右端点的最长无重复子串
+            cnt[c] += 1
+            while cnt[c]>1:  # 如果有重复的，左端点右移(保证以 right 为右端点的都是无重复的，这一步是去重)
+                cnt[s[left]] -= 1
+                left += 1
+        	ans = max(ans, right - left + 1)
+        return ans 
+```
+
+##### NO.3090 每个字符最多出现两次的最长子字符串
+
+【解析】和上一个题目的解题思路完全相同
+
+```python
+class Solution:
+    def maximumLengthSubstring(self, s: str) -> int:
+        ans = 0
+        cnt = Counter()
+        left = 0
+        for right, c in enumerate(s):
+            cnt[c] += 1
+            
+            while cnt[c] > 2:
+                cnt[s[left]] -= 1
+                left += 1
+            
+            ans = max(ans, right - left + 1)
+            
+        return ans
+```
+
+##### NO.1493 删掉一个元素以后全为 1 的最长子数组
+
+【解析】 本题的关键是对题目信息进行转换：寻找一个最多包含 1 个 `0` 的最长连续子数组
+
+```python
+class Solution:
+    def longestSubarray(self, nums: list[int]) -> int:
+        ans = 0
+        left = 0
+        cnt = 0
+        for right, x in enumerate(nums):
+            if x == 0:
+                cnt += 1
+            while cnt > 1:
+                if nums[left] == 0:
+                    cnt -= 1
+                left += 1
+            ans = max(ans, right-left + 1) 
+        
+        return ans-1 # 必须删除一个元素，因此减 1 (删除那个0)
+```
+
