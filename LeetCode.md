@@ -276,67 +276,6 @@ def backtrack(状态):
 
 ![1792393077117](LeetCode.assets/1792393077117.png)
 
-NO.78 [子集](https://leetcode.cn/problems/subsets/)
-
-```python
-class Solution:
-    def subsets(self, nums: list[int]) -> list[list[int]]:
-        n = len(nums)
-        ans = []
-        path = []
-
-        def dfs(i):
-            # 所有元素都已经决定完：得到一个完整方案
-            if i == n:
-                ans.append(path.copy())
-                return
-
-            # 分支一：不选 nums[i]
-            # path 不变，直接决定下一个元素
-            dfs(i + 1)
-
-            # 分支二：选 nums[i]
-            path.append(nums[i])
-
-            # 在已经选入 nums[i] 的基础上，
-            # 继续决定后面的元素
-            dfs(i + 1)
-
-            # 这一分支探索结束，撤销本层的选择
-            path.pop()
-
-        dfs(0)
-        return ans
-```
-
-- 这里需要理解关键：`i` 表示当前要决定哪个元素，`path` 保存此前决定选入的元素。每个元素都做一次“选或不选”的决定，全部决定完，就得到一个子集。
-- `i` 表示已经处理了多少个元素，不表示已经选了多少个元素。
-- `def dfs(i):` 表示下标 `0` 到 `i - 1` 的元素已经决定完了，现在开始决定 `nums[i]` 以及后面元素选不选。
-- 为什么“不选”后面没有 `pop()`？因为不选，就没有往 `path` 里面添加当前元素，因此也不需要删除当前元素。
-
-
-
-NO.17: [电话号码的字母组合](https://leetcode.cn/problems/letter-combinations-of-a-phone-number/description/)
-
-```python
-# 枚举，让下标和数字对应起来
-MAPPING = ["","","abc","def","ghi","jkl","mno","pqrs","tuv","wxyz"]
-class Solution:
-    def letterCombinations(self, digits: str) -> list[str]:
-        n = len(digits)
-        ans = []
-        path = [''] * n  # 每个path都是一个长度为n的数组
-        def dfs(i): # dfs（i） 表示下标大于等于i的，还需要枚举，所以是从dfs(i)递归到dfs(i+1)
-            if i==n:  # 已经达到最后一个数字，可以结束了(因为要求生成的字符串的长度和输入的字符串长度一致)
-                ans.append(''.join(path))
-                return
-            for c in MAPPING[int(digits[i])]:  # 需要枚举第i个数字有哪些字母
-                path[i] = c
-                dfs(i+1)  # 这里递归
-        dfs(0)
-        return ans        
-```
-
 
 
 NO.131 [分割回文串](https://leetcode.cn/problems/palindrome-partitioning/description/)
@@ -378,11 +317,15 @@ class Solution:
 
 ![1792570162986](LeetCode.assets/1792570162986.png)
 
-![1792570334671](LeetCode.assets/1792570334671.png)
+
 
 NO.77 [组合](https://leetcode.cn/problems/combinations/description/)
 
 如果用之前的思路做：
+
+
+
+用组合剪枝的思路做：
 
 ```python
 class Solution:
@@ -391,21 +334,20 @@ class Solution:
         path = []
 
         def dfs(i):
+            # 剪枝部分
+            d = k - len(path)
+            if i < d:
+                return
+            # 主体部分
             if len(path) == k:
                 ans.append(path.copy())
                 return 
-            for j in range(i,n+1):
+            for j in range(i,0,-1):  # 向下枚举
                 path.append(j)
-                dfs(j+1)
+                dfs(j-1)
                 path.pop()
-        dfs(1)
-        return ans
-```
-
-用组合剪枝的思路做：
-
-```python
-
+        dfs(n)
+        return ans	
 ```
 
 - 如果剩下能选的数字数量，比还需要的数量少，那么这条路一定凑不够 `k` 个数，可以直接返回。
@@ -1255,3 +1197,698 @@ class Solution:
         return ans-1 # 必须删除一个元素，因此减 1 (删除那个0)
 ```
 
+##### No.3643 使数组平衡的最少移除数目
+
+【解析】本题的关键是对题目信息进行转换：删除最少的元素，让数组平衡。可以转换成：寻找最多能够保留多少个元素，使得最大值不超过最小值的 k 倍。
+
+同时，因为涉及最大最小值，可以先对原数组进行一个排序，排序后，最小值一定是nums[left], 最大值一定是nums[right]
+
+```python
+class Solution:
+    def minRemoval(self, nums: List[int], k: int) -> int:
+        nums.sort()
+        n = len(nums)
+        if n<=1:
+            return 0
+        
+        left = 0
+        ans = 0  # 这里存储的是最多能够保留的元素，题目问的是最少删除的元素，需要用 n-ans
+        
+        for right, x in enumerate(nums):
+
+            while x > nums[left] * k:
+                left += 1
+            
+            ans = max(ans, right-left+1)
+        
+        return n - ans
+```
+
+### 回溯问题
+
+回溯算法适用的典型场景：一个答案由多个决策组成，每个决策有若干选择，需要枚举全部合法答案。
+
+```python
+原问题：构造长为n的字符串
+			|
+		枚举一个字母
+			↓
+子问题：构造长为 n-1 的字符串
+
+子问题和原问题是相似的，这种从原问题到子过程的过程适合用递归解决
+```
+
+而，回溯问题，是有一个增量构造答案的过程（这个过程用递归实现），如图所示：
+
+![1794301553741](LeetCode.assets/1794301553741.png)
+
+这里就是，第一次可以选 'a' ，'b' ，'c' 三种， 然后第二次又可以选 'd' ，'e' ，'f'，不断增加，构造答案
+
+用一个全局 path 数组记录递归路径上枚举的字母，那么就有回溯三问 
+
+​	a. 当前操作是什么？枚举 path[i] 要填入的字母
+
+​	b. 子问题是什么？构造字符串 ≥ i 的部分
+
+​	c. 枚举完了第 `i` 个字母后，下一个子问题是什么？构造字符串 ≥ i + 1 的部分
+
+`dfs(i) → dfs(i + 1)` 对于递归参数中的 `i` , 它的含义不是第 `i` 个，而是大于等于 `i` 的这部分还需要枚举
+
+
+
+
+
+
+
+回溯问题的基本动作：做出选择 → 继续向下探索 → 撤销选择 → 尝试下一个选择
+
+用两个数组来描述当前状态：
+
+`path:` 当前已经选择的元素。例如：`path = [1, 2]`表示当前选出的子集是`[1,2]`
+
+`start:` 接下来允许从哪个下标开始选择。例如：path = [1]， start = 1，已经选择了 `1`，接下来只能从下标 `1` 开始继续选择。
+
+因此可以定义：`def backtrack(start):` 在当前 `path` 的基础上，从下标 `start` 开始，尝试继续加入元素，找出所有可能的子集。
+
+#### 按位置枚举的构造型回溯
+
+##### NO.17 电话号码的字母组合
+
+【分析】答案有两个特点 1. 答案的长度是固定的，输入有几个数字，输出就只能有几个字母； 2. 答案中每个位置有哪些选择，是由输入对应位置的数字决定的。
+
+`dfs(i)`： 前面 `i` 个位置已经确定，现在需要填第 `i` 个位置。
+
+| 函数     | 已经确定的内容    | 接下来做什么       |
+| -------- | ----------------- | ------------------ |
+| `dfs(0)` | 什么都没有        | 填第 0 个字母      |
+| `dfs(1)` | 已确定第 0 个字母 | 填第 1 个字母      |
+| `dfs(2)` | 两个字母全部确定  | 保存答案，结束递归 |
+
+`path` ：用来记录当前正在构造的答案。
+
+`ans` ：保存所有已经完成的答案
+
+`return`：这里的 `return` 只是结束当前这一次 dfs 调用，并不是结束整个程序。它会返回上一层，继续尝试其他字母。
+
+递归函数执行完后，会返回到调用它的位置，继续执行后面的代码
+
+`''.join(path)` 这行代码的含义是：将列表（或可迭代对象）path 中的所有元素连接成一个单一的字符串。 `''`（空字符串）：这是连接符。表示将列表中的元素直接拼接在一起，元素与元素之间**不会添加任何分隔符**（如空格、逗号或斜杠）。`.join(...)`：这是字符串的方法，专门用来把序列（如列表、元组）中的多个字符串拼接成一个长字符串。
+
+```python
+# 枚举，让下标和数字对应起来
+MAPPING = ["","","abc","def","ghi","jkl","mno","pqrs","tuv","wxyz"]
+class Solution:
+    def letterCombinations(self, digits: str) -> list[str]:
+        n = len(digits)
+        ans = []
+        path = [''] * n  # 每个path都是一个长度为n的数组
+        def dfs(i): # dfs（i） 表示下标大于等于i的，还需要枚举，所以是从dfs(i)递归到dfs(i+1);;
+            if i==n:  # 已经达到最后一个数字，可以结束了(因为要求生成的字符串的长度和输入的字符串长度一致)
+                ans.append(''.join(path))
+                return
+            for c in MAPPING[int(digits[i])]:  # 需要枚举第 i个位置 数字有哪些字母
+                path[i] = c # 这里每选择好一个位置上的字母后，就立刻去下一个位置
+                dfs(i+1)  # 继续去下一个位置判断
+        dfs(0)  # 从第 0 个位置开始枚举
+        return ans        
+```
+
+这里没有 pop(), 这是另外一种写法，
+
+写法1：固定长度，可以直接覆盖
+
+```python
+path = [''] * n
+
+def dfs(i):
+    if i == n:
+        ans.append(''.join(path))
+        return
+
+    for c in MAPPING[int(digits[i])]:
+        path[i] = c
+        dfs(i + 1)
+```
+
+虽然 `path` 中会暂时保留上一条路径的字符，但它们在形成下一条完整答案之前都会被覆盖。所以不需要恢复现场。
+
+
+
+写法2：动态增加长度，必须撤销选择
+
+```python
+path = []
+
+def dfs(i):
+    if i == n:
+        ans.append(''.join(path))
+        return
+
+    for c in MAPPING[int(digits[i])]:
+        path.append(c)
+        dfs(i + 1)
+        path.pop()
+```
+
+这里 `path` 的长度会不断变化。如果不写 `pop()`，上一个选择会留在 `path` 中，导致后续答案错误。
+
+因此：固定长度的路径可以直接覆盖；动态增长的路径通常需要 append 和 pop 配套。两种方法都是回溯，只是维护路径的方式不同。
+
+```
+1>初始：
+path = ['', '']
+
+2>选择 a：
+path = ['a', '']
+
+3>选择 d：
+path = ['a', 'd']
+
+得到答案 "ad"
+
+退回到 2>
+4>选择 e：
+path = ['a', 'e']
+
+得到答案 "ae"
+
+...
+```
+
+##### 通用模板
+
+模板 A：从答案的角度枚举（固定长度）
+
+适用于：答案有固定的 n 个位置，每个位置都需要从候选集合中选择一个元素。
+
+```python
+def solve():
+    n = ...  # 答案的长度
+    ans = []
+    path = [None] * n
+
+    def dfs(i):
+        # 1. 递归边界
+        if i == n:
+            ans.append(path.copy())
+            return
+
+        # 2. 枚举当前位置的所有选择
+        for x in choices(i):
+
+            # 3. 作出选择
+            path[i] = x
+
+            # 4. 递归下一个位置
+            dfs(i + 1)
+
+    dfs(0)
+    return ans
+```
+
+其中 `choices(i)` 代表第 `i` 个位置的所有合法选择，需要根据具体题目实现。
+
+这套模板最重要的四个问题是：
+
+| 需要思考的问题         | 对应代码                        |
+| ---------------------- | ------------------------------- |
+| 递归函数的参数是什么？ | `dfs(i)`，表示当前填第 i 个位置 |
+| 什么时候得到一个答案？ | `if i == n`                     |
+| 当前位置有哪些选择？   | `for x in choices(i)`           |
+| 作出选择后如何处理？   | `path[i] = x`，然后 `dfs(i+1)`  |
+
+
+
+模板 B：动态路径回溯（更通用）
+
+有些题目的答案长度并不固定，例如求一个数组的所有子集。比如 NO.78， 答案不定长，就必须用这种方式来完成
+
+注意：`ans.append(path.copy())` 的作用是保存当前 `path` 的一个独立副本，避免后续回溯修改 `path` 时，已经保存的答案也跟着发生变化。
+
+```python
+def solve():
+    ans = []
+    path = []
+
+    def dfs(i):
+        if 满足结束条件:
+            ans.append(path.copy())  #这里用copy是
+            return
+
+        for x in 当前所有合法选择:
+            path.append(x)   # 作出选择
+            dfs(下一个状态)   # 递归
+            path.pop()       # 恢复现场
+
+    dfs(初始状态)
+    return ans
+```
+
+这个模板表达的是回溯算法最通用的思想：
+
+枚举选择 → 作出选择 → 递归探索 → 撤销选择 → 枚举下一个选择。
+
+##### No.784 [字母大小写全排列](https://leetcode.cn/problems/letter-case-permutation/)
+
+```python
+class Solution:
+    def letterCasePermutation(self, s: str) -> list[str]:
+        n = len(s)
+        ans = []
+        path = [''] * n
+        
+
+        def dfs(i):
+            if i == n:
+                ans.append(''.join(path))
+                return
+            if s[i].isdigit():
+                path[i] = s[i]
+                dfs(i+1)
+            else:            
+                # 选择转变
+                path[i] = s[i].swapcase()  # 转换大小写
+                dfs(i+1)
+
+                # 选择不变
+                path[i] = s[i]
+                dfs(i+1)
+
+            
+        dfs(0)
+        return ans
+```
+
+##### NO.3211 [生成不含相邻零的二进制字符串](https://leetcode.cn/problems/generate-binary-strings-without-adjacent-zeros/)
+
+【解析】题目的要求可以转换为，生成的子字符串中，不能出现两个连续的 0 
+
+```python
+class Solution:
+    def validStrings(self, n: int) -> List[str]:
+        ans = []
+        path = [''] * n
+
+        def dfs(i):
+            # 终止条件
+            if i == n:
+                ans.append(''.join(path))
+                return
+            
+            # 这种情况下，只能选0
+            if i-1>=0 and path[i-1] == '0':  
+                path[i] = '1'
+                dfs(i+1)
+            else:  # 前一个位置是1 不是0， 这个位置可以选择0或者选择1
+                path[i] = '0'
+                dfs(i+1)
+
+                path[i] = '1'
+                dfs(i+1)
+        
+        dfs(0)
+        return ans
+```
+
+
+
+#### 子集型回溯
+
+【解析】子集型回溯的特点就是：每个元素都可以**选或者不选**。比如 0-1背包问题。
+
+**从输入的角度思考**，每个数可以在子集中（选），也可以不在子集中（不选），这里叶子是答案，这里的回溯三问是：
+a. 当前操作是什么？从输入的角度看，应该是枚举的第 i 个数选不选
+
+b. 子问题是什么？从下标 >=i 的数字中构造子集
+
+c. 下一个子问题是什么？从下标 >=i+1 的数字中构造子集
+
+dfs(i) --> dfs(i+1)  这种方法相当于是递归
+
+**从答案的角度思考，**枚举第一个数选谁，枚举第二个数选谁..., 这里每个节点都是答案，这里的回溯三问是：
+
+a. 当前操作是什么？枚举一个下标 j>=i 的数字，加入path
+
+b. 子问题是什么？从下标 >=i 的数字中构造子集
+
+c. 下一个子问题是什么？从下标 >=j+1 的数字中构造子集
+
+dfs(i) --> dfs(i+1)
+
+​		---> dfs(i+2)
+
+​		---> ...
+
+​		---> dfs(n)  这种方法相当于是广度优先搜索
+
+##### NO.78 [子集](https://leetcode.cn/problems/subsets/)
+
+【解析】这里的答案不定长，只能用 模板 B：动态路径回溯
+
+注意：这里使用的是`path.copy(),`保存当前 `path` 的一个独立副本，避免后续回溯修改 `path` 时，已经保存的答案也跟着发生变化。
+
+如果使用的是 `ans.append(path)`,  保存的是对 `path` 这个列表对象的引用，而不是当时列表内容的独立快照。
+
+- 这里需要理解关键：`i` 表示当前要决定哪个元素，`path` 保存此前决定选入的元素。每个元素都做一次“选或不选”的决定，全部决定完，就得到一个子集。
+- `i` 表示已经处理了多少个元素，不表示已经选了多少个元素。
+- `def dfs(i):` 表示下标 `0` 到 `i - 1` 的元素已经决定完了，现在开始决定 `nums[i]` 以及后面元素选不选。
+- 为什么“不选”后面没有 `pop()`？因为不选，就没有往 `path` 里面添加当前元素，因此也不需要删除当前元素。
+
+```python
+class Solution:
+    def subsets(self, nums: list[int]) -> list[list[int]]:
+        n = len(nums)
+        ans = []
+        path = []  # 这里的答案不定长，所以必须用动态路径回溯
+
+        def dfs(i):
+            # 终止条件，这里 i==n, 不是说path必须是n这么长，而是已经看完了n个数了，每个数都做了判断
+            if i==n:
+                ans.append(path.copy())
+                return
+            
+            # 分支一：如果不选，path不变，当前这个数就直接跳过
+            dfs(i+1)
+
+            # 分支二：选择当前数，就直接加入到路径中，然后看下一个数
+            path.append(nums[i])
+            dfs(i+1)
+            path.pop()  # 因为这个分支修改了path, 所以需要恢复现场，（撤销本次选择，继续看下一个数）
+        dfs(0)
+        
+        return ans
+```
+
+```python
+# 方法二 ，从答案的角度去考虑
+class Solution:
+    def subsets(self, nums: list[int]) -> list[list[int]]:
+        n = len(nums)
+        ans = []
+        path = []  # 这里的答案不定长，所以必须用动态路径回溯
+
+        def dfs(i):
+            ans.append(path.copy())  # 递归到的每个节点都是答案
+            if i==n:
+                return
+            for j in range(i,n):
+            	path.append(nums[j])
+            	dfs(j+1)
+            	path.pop()  
+        dfs(0)
+        return ans
+```
+
+
+
+##### NO.131 分割回文串
+
+【解析】题目要求的是子串，它必须是原字符串中连续的一段字符，绝不能中间断开或跳过某些字符。
+
+`dfs(i)` 表示：下标 `0` 到 `i-1` 的字符已经完成合法分割，现在需要从下标 `i` 开始，决定下一段回文子串的结束位置。
+
+注意：必须在i==n时才能结束，因为这样才是一个完成的字符串，题目要求时分割字符串成子串，必须每个字母都要在
+
+```python
+# 采用方法2， 从答案的角度思考
+class Solution:
+    def partition(self, s: str) -> list[list[str]]:
+        # t == t[::-1]:
+        n = len(s)
+        ans = []
+        path = []
+
+        def dfs(i):
+            # 终止条件，已经看完了所有数
+            if i==n: # 
+                ans.append(path.copy())
+                return
+
+            # 枚举当前子串的结束位置 j
+            for j in range(i,n):
+                t = s[i:j+1]  # 取出从 i 到 j 的子串
+                if t == t[::-1]: 
+                    path.append(t)
+                    dfs(j+1)
+                    path.pop()
+        
+        dfs(0)
+
+        return ans
+```
+
+采用方法1， 从输入的角度思考
+
+`dfs(i, start)`：
+
+- `i`：当前正在决定第 `i-1` 和第 `i` 个字符之间是否切开。
+- `start`：当前尚未完成的这一段子串的起始下标。
+
+情况A不切：`dfs(i + 1, start)`， 那么这一段的起点不变，继续看下一个字符是否切开
+
+情况B切：`t = s[start:i]` ，`t` 就是被切出来的子串
+
+```python
+class Solution:
+    def partition(self, s: str) -> list[list[str]]:
+        n = len(s)
+       	ans = []
+        path = []
+        
+        # i: 正在确定 s[i-1] 和 s[i] 之间是否切开
+        # start: 当前正在处理的这一段子串的起始位置
+        def dfs(i,start):
+            # 所有分割线都处理完了
+            if i==n:
+                t = s[start:n]
+                
+                # 检查最后一段是否是回文串
+                if t = t[::-1]:
+                    path.append(t)
+                    ans.append(path.copy())
+                    path.pop()
+                return
+            # 情况 1 不切：档期那这一段继续往右延伸
+            dfs(i+1, start)
+            
+            # 情况 2 切：先判断切出来的一段是否合法
+            t = s[start:i]
+
+            if t == t[::-1]:
+                path.append(t)
+                dfs(i + 1, i)
+                path.pop()
+
+        # 从第一条可选分割线开始
+        dfs(1, 0)
+        return ans
+```
+
+注意：当 `i == n` 时，所有可选分割线都决定完了，但最后一段字符串还没有加入 `path`，所以必须单独检查并保存。只有当一段字符串已经完成时，才需要检查它是否合法。
+
+#### 组合型回溯
+
+##### NO.77 组合
+
+方法1：用之前 选 或者 不选的思路进行求解：（参考 NO.78）
+
+这里的  dfs(i)：表示当前正在处理第 i 个位置上的数字
+
+```python
+class Solution:
+    def combine(self, n: int, k: int) -> list[list[int]]:
+        ans = []
+        path = []
+
+        def dfs(i):
+            # 已经选够 k 个数字
+            if len(path) == k:
+                ans.append(path.copy())
+                return
+
+            # 所有数字已经处理完
+            if i > n:
+                return
+
+            # 不选择当前数字
+            dfs(i + 1)
+
+            # 选择当前数字
+            path.append(i)
+            dfs(i + 1)
+            path.pop()
+
+        dfs(1)
+        return ans
+```
+
+方法2：从答案的角度进行思考：
+
+```python
+class Solution:
+    def combine(self, n: int, k: int) -> list[list[int]]:
+        ans = []
+        path = []
+
+        def dfs(i):
+            if len(path) == k:
+                ans.append(path.copy())
+                return 
+            for j in range(i,n+1):
+                path.append(j)
+                dfs(j+1)
+                path.pop()
+        dfs(1)
+        return ans
+```
+
+方法3：进行优化，提前做出递归
+
+设 `path` 长为 `m`  ，那么还需要选 `d = k - m` 个数；假设从大到小进行枚举，（倒叙枚举，这里的不等式更简单）
+设当前需要从 [1, i] 这 i 个数中选数，如果 i < d，最后必然无法选出 k 个数，不需要继续递归，这是一种剪枝技巧。
+
+```python
+class Solution:
+    def combine(self, n: int, k: int) -> list[list[int]]:
+        ans = []
+        path = []  # 长度是固定的，也可以把path写成固定的 path = [0]*k
+
+        def dfs(i):
+            # 剪枝部分
+            d = k - len(path)
+            if i < d:
+                return
+            # 主体部分
+            if len(path) == k:
+                ans.append(path.copy())
+                return 
+            for j in range(i,0,-1):   # 从 i 开始往下枚举，左闭右开，步长 -1， 所以不包含 0 
+                path.append(j)
+                dfs(j-1)
+                path.pop()
+        dfs(n)
+        return ans	
+```
+
+##### NO.216 组合总和Ⅲ
+
+【分析】参考NO.77, 可以剪枝优化的地方，
+
+设已经选了 `m` 个数字，还需要选 `d = k - m` 个数字
+设还需要选和为 `t` 的数字 (初始为 `n`，每选一个数字 `j`，就把 `t` 减小 `j`)
+
+剪枝  1. 剩余数字数目不够 i < d
+        2. t < 0
+                3. 剩余数字即使全部选最大的，和也不够 t
+                    例如 i = 5，还需要选 d = 3 个数
+                    那么如果 t > 5 + 4 + 3，可以直接返回
+                    t > i + ... + (i - d + 1) = (i + i - d + 1) * d / 2
+
+```python
+# 不用剪枝，直接用原来的方法
+class Solution:
+    def combinationSum3(self, k: int, n: int) -> List[List[int]]:
+        ans = []
+        path = []
+
+        def dfs(i):
+            if len(path) == k and sum(path) == n:
+                ans.append(path.copy())
+                return 
+            
+            for j in range(i,0,-1):
+                path.append(j)
+                dfs(j-1)
+                path.pop()
+        
+        dfs(9)
+        return ans
+```
+
+加上剪枝后，这里有一个等差数列求和递推式子：
+
+```python
+class Solution:
+    def combinationSum3(self, k: int, n: int) -> List[List[int]]:
+        ans = []
+        path = []
+
+        def dfs(i , t):
+            d = k-len(path)
+            if t<0 or t> (i*2 - d + 1) * d // 2:  #等差数列之和
+                return
+
+            if len(path) == k and sum(path) == n:
+                ans.append(path.copy())
+                return 
+            
+            for j in range(i,0, -1):
+                path.append(j)
+                dfs(j-1, t-j) # 选了 j 之后，剩余的和为 t - j
+                path.pop()
+        
+        dfs(9, n) # 表示可以从9倒着选，需要选的数的和为n
+        return ans
+```
+
+##### NO.22 括号生成
+
+【分析】和NO.3211类似，不过这里对左括号和右括号的数量有限制，左括号的数量必须小于n，右括号的数量不能超过左括号，所以需要修改dfs
+
+`dfs(left, right)：`当前已经放置了 `left` 个左括号和 `right` 个右括号，在此前构造的括号序列合法的前提下，继续生成剩余所有合法的括号组合。
+
+- `left`：已经选择的左括号数量。
+- `right`：已经选择的右括号数量。
+- `path`：当前正在构造的括号字符串。
+- 每次递归有两个分支。
+
+```python
+class Solution:
+    def generateParenthesis(self, n: int) -> list[str]:
+        ans = []
+        path = []
+
+        def dfs(left, right):
+            if len(path)==2*n:
+                ans.append(''.join(path))
+                return
+            
+            if left < n: # 左括号个数小于n，可以继续选左括号
+                path.append('(')
+                dfs(left + 1, right)
+                path.pop()
+            if right < left: #  
+                path.append(')')
+                dfs(left, right + 1)
+                path.pop()
+        dfs(0,0)
+        return ans
+```
+
+【方法2】回溯三问 
+
+a. 当前操作是什么？枚举 path[i] 是左括号还是右括号
+b. 子问题是什么？构造字符串 ≥ i 的部分
+c. 下一个子问题是什么？构造字符串 ≥ i + 1 的部分
+
+还需要记录左括号的个数 open，从而方便判断
+
+需要选 n 个左括号：只要 open < n 就可以选左括号
+
+右括号的个数为 i - open，如果右括号的个数小于左括号的个数，即 i - open < open，就可以选右括号
+
+#### 排列型回溯
+
+NO.46
+
+【分析】数组元素互不相同，那么全排列的个数就是数组元素的阶乘
+
+
+
+### 背包问题
+
+#### 0-1背包
+
+NO.416 分割等和子集
+
+【解析】
