@@ -278,80 +278,9 @@ def backtrack(状态):
 
 
 
-NO.131 [分割回文串](https://leetcode.cn/problems/palindrome-partitioning/description/)
-
-```python
-class Solution:
-    def partition(self, s: str) -> list[list[str]]:
-        n = len(s)
-        ans = []
-        path = []
-
-        def dfs(i):
-            # 所有字符都已分割完成
-            if i == n:
-                ans.append(path.copy())
-                return
-
-            # 下一段从 i 开始，枚举它的结束位置 j
-            for j in range(i, n):
-                t = s[i:j + 1]
-
-                # 只有回文片段，才可以作为当前选择
-                if t == t[::-1]:
-                    path.append(t)  # 选择这一段
-                    dfs(j + 1)      # 继续分割剩下的字符串
-                    path.pop()      # 撤销这一段，尝试其他结束位置
-
-        dfs(0)
-        return ans
-```
-
-- `dfs(i)` 的含义：`s[:i]` 已经分割完成，接下来要找出 `s[i:]` 的所有合法分割方式。  
-- `path` 保存前边已经分割好的字符串
-- `i` 是剩余字符串的起点，不是已经选了多少段。
 
 
 
-`组合型回溯:`
-
-![1792570162986](LeetCode.assets/1792570162986.png)
-
-
-
-NO.77 [组合](https://leetcode.cn/problems/combinations/description/)
-
-如果用之前的思路做：
-
-
-
-用组合剪枝的思路做：
-
-```python
-class Solution:
-    def combine(self, n: int, k: int) -> list[list[int]]:
-        ans = []
-        path = []
-
-        def dfs(i):
-            # 剪枝部分
-            d = k - len(path)
-            if i < d:
-                return
-            # 主体部分
-            if len(path) == k:
-                ans.append(path.copy())
-                return 
-            for j in range(i,0,-1):  # 向下枚举
-                path.append(j)
-                dfs(j-1)
-                path.pop()
-        dfs(n)
-        return ans	
-```
-
-- 如果剩下能选的数字数量，比还需要的数量少，那么这条路一定凑不够 `k` 个数，可以直接返回。
-- 
 
 ### 动态规划
 
@@ -418,42 +347,7 @@ class Solution:
 
 ![1792496351703](LeetCode.assets/1792496351703.png)
 
-![1792496384013](LeetCode.assets/1792496384013.png)
 
-0-1背包问题：有n个物体，每个物体只有一个
-
-```python
-# 0-1背包问题
-# capacity: 背包容量
-# w[i]: 第i个物品的体积
-# v[i]: 第i个物品的价值
-# 返回：所选物品体积和不超过capacity的前提下，所能得到的最大价值和
-def zero_one_knapsack(capacity: int, w: List[int], v:List[int]) -> int:
-    n = len(w)
-
-    @cache # 加上这个装饰器，改成记忆化搜索，这样可以节省内存开销
-    def dfs(i,c):
-        # 此时一个物品都没有了，可以直接返回0
-        if i<0:  
-            return  0
-        
-        # 如果这个物品的体积已经超过了最大容量了，只能不选
-        if c<w[i]: 
-            return dfs(i-1,c)  
-        
-        # 背包还有容量放下当前物品，可以进行讨论
-        a = dfs(i-1, c)  # 情况1，我不选当前物品，那么容量不变，在剩余i-1个物品中进行选择
-        b = dfs(i-1, c-w[i]) + v[i]  # 情况2，我选择当前物品，那么当前的价值加上v[i], 当前背包的容量减去w[i], 然后在剩余的i-1个物品中继续选择
-        return max(a,b)  # 返回两种情况的最大值，这样才能保证所选价值是最大的
-    
-    return dfs(n-1, capacity) # 从最后一个物品开始选择，这个时候容量就是初始容量
-```
-
-0-1背包问题的常见变形：
-
-- 至多装capacity，求方案数/最大价值和
-- 恰好装capacity，求方案数/最大/最小价值和
-- 至少装capacity，求方案数/最小价值和
 
 ```
 dp[i][j]: 下标为[0,i]之间的物体，任取放在剩余容量为j的背包里， 此时背包的最大价值
@@ -469,110 +363,7 @@ dp[i][j]可以从哪几个方向推导出来：
 可以画一个dp[i][j]的二维表格来进行理解
 ```
 
-NO.494 [目标和](https://leetcode.cn/problems/target-sum/description/)
 
-法1：用二维数组
-
-```python
-dp[i][j]： 前 i 个数字中，选出和为 j 的方案数
-
-class Solution:
-    def findTargetSumWays(self, nums: list[int], target: int) -> int:
-        n = len(nums)
-        s = sum(nums)
-        p = s + target
-        if p<0 or p%2!=0:
-            return 0
-        p = p // 2
-
-        f = [[0] * (p + 1) for _ in range(n+1)]
-        f[0][0] = 1
-        
-        for i,x in enumerate(nums):
-            for c in range(p + 1):
-                if c < x: # 如果当前背包容量放不下了，就只能继续看剩下的i个数
-                    f[i+1][c] = f[i][c]
-                else: # 还放的下，分情况讨论
-                    f[i+1][c] = f[i][c] + f[i][c-x]
-        
-        return f[n][p]
-```
-
-法2：使用0-1背包
-
-```python
-class Solution:
-    def findTargetSumWays(self, nums: list[int], target: int) -> int:
-        n = len(nums)
-        s = sum(nums)
-        p = s + target
-        if p<0 or p%2!=0:
-            return 0
-        p = p // 2
-
-        @cache
-        def dfs(i,c):
-            if i<0:
-                return 1 if c==0 else 0  # c=0的时候，这个才是一个合法的方案，也就是刚好等于target
-            if c<nums[i]:
-                return dfs(i-1, c)
-            return dfs(i-1,c) + dfs(i-1,c-nums[i])  # 因为求的是方案数
-        
-        return dfs(n-1, p)  # 下标从 0 到 n-1
-```
-
-
-
-完全背包：
-
-有n种物品，每种物品可以选无数次，第 i 种物品的体积为 w[i], 价值为 v[i], 求体积和不超过 capacity 的最大价值和
-
-##### No.322 [零钱兑换](https://leetcode.cn/problems/coin-change/description/)
-
-方法1，完全背包做法
-
-```python
-class Solution:
-    def coinChange(self, coins: list[int], amount: int) -> int:
-        n = len(coins)
-
-        @cache
-        def dfs(i, c):
-            # 此时没有硬币了，可以返回0
-            if i<0:
-                return 0 if c==0 else inf
-            # 当前容量已经不够放下coins[i], 那么就看剩余的i-1个硬币
-            if c < coins[i]:
-                return dfs(i-1, c) 
-            # 当前容量可以放下 coins[i], 分情况讨论
-            a = dfs(i-1, c)  # 不选 coins[i], 那么容量不变，继续在剩余的 i-1 个选
-            b = dfs(i, c-coins[i])  # 选 coins[i], 容量减少coins[i], 使用的硬币个数 + 1，同时继续在剩余的i个中选，因为可以无限选，所以是 i， 不是 i-1
-            return min(dfs(i-1, c), dfs(i, c-coins[i]) + 1)
-
-        ans = dfs(n-1, amount)
-        return ans if ans<inf else -1
-```
-
-方法2， 二维DP数组
-
-```python
-class Solution:
-    def coinChange(self, coins: list[int], amount: int) -> int:
-        n = len(coins)
-
-        f = [[inf] * (amount + 1) for _ in range(n + 1)]
-        f[0][0] = 0
-
-        for i, x in enumerate(coins):
-            for c in range(amount + 1):  # c表示剩余容量
-                if c < x:
-                    f[i+1][c] = f[i][c]
-                else:
-                    f[i+1][c] = min(f[i][c], f[i+1][c-x] + 1)
-        
-        ans = f[n][amount]
-        return ans if ans < inf else -1
-```
 
 
 
@@ -1609,6 +1400,10 @@ class Solution:
 
 注意：必须在i==n时才能结束，因为这样才是一个完成的字符串，题目要求时分割字符串成子串，必须每个字母都要在
 
+`i` 是剩余字符串的七点，不是已经选了多少段
+
+`path` 保存前边已经分割好的字符串
+
 ```python
 # 采用方法2， 从答案的角度思考
 class Solution:
@@ -1624,16 +1419,17 @@ class Solution:
                 ans.append(path.copy())
                 return
 
-            # 枚举当前子串的结束位置 j
+            # 下一段从 i 开始，枚举当前子串的结束位置 j
             for j in range(i,n):
                 t = s[i:j+1]  # 取出从 i 到 j 的子串
+                
+                # 只有是回文，才能考虑
                 if t == t[::-1]: 
-                    path.append(t)
-                    dfs(j+1)
-                    path.pop()
+                    path.append(t)	# 选择这一段
+                    dfs(j+1)	    # 继续分割剩下的字符串
+                    path.pop()		# 恢复现场，尝试结束其他位置
         
         dfs(0)
-
         return ans
 ```
 
@@ -1756,7 +1552,7 @@ class Solution:
         def dfs(i):
             # 剪枝部分
             d = k - len(path)
-            if i < d:
+            if i < d: # 如果剩下能选的数量比需要的数量少，这么这条路就一定凑不够 k 个数，可以直接返回
                 return
             # 主体部分
             if len(path) == k:
@@ -1879,15 +1675,472 @@ c. 下一个子问题是什么？构造字符串 ≥ i + 1 的部分
 
 #### 排列型回溯
 
-NO.46
+##### NO.46 全排列
 
-【分析】数组元素互不相同，那么全排列的个数就是数组元素的阶乘
+【分析】数组元素互不相同，那么全排列的个数就是数组元素的阶乘.
+
+数组 path  记录路径上的数（已选数字）
+
+集合 s 记录剩余未选数字
+
+用回溯三问进行分析：
+
+a. 当前操作是什么？从集合 s 中枚举 path[i] 要填入的数字 x
+
+b. 子问题是什么？构造排列 >= i 的部分，剩余未选数字集合为 s
+
+c. 下一个子问题是什么? 构造排列 >= i+1 的部分，剩余未选数字集合为 s - {x} 
+
+dfs(i, s) → dfs(i + 1, s - {x_1})[cite: 22]
+			 → dfs(i + 1, s - {x_2})[cite: 22]
+			 → ...
+
+```python
+class Solution:
+    def permute(self, nums: list[int]) -> list[list[int]]:
+        n = len(nums)
+        ans = []
+        path = [0] * n  # 路径是一个长为 n 的数组
+
+        # i: 需要构造 >=i 的全排列
+        # s: 剩余可选元素的集合
+        def dfs(i,s):
+            # 这一次全排列已经构造完毕，可以添加到答案中
+            if i==n:
+                ans.append(path.copy())
+                return
+            
+            for x in s:
+                path[i] = x
+                dfs(i+1,s-{x})
+
+        dfs(0,set(nums))
+        return ans
+```
+
+方法2， 用一个布尔数组来标记数字是否被选择过
+
+```python
+class Solution:
+    def permute(self, nums: list[int]) -> list[list[int]]:
+        n = len(nums)
+        ans = []
+        path = [0] * n  # 路径是一个长为 n 的数组
+        on_path = [False] * n
+        def dfs(i):
+            # 这一次全排列已经构造完毕，可以添加到答案中
+            if i==n:
+                ans.append(path.copy())
+                return
+            
+            for j in range(n):
+                if not on_path[j]:
+                    path[i] = nums[j]
+                    on_path[j] = True
+                    dfs(i+1)
+                    on_path[j] = False # 恢复现场
+                    
+        dfs(0)
+        return ans
+```
+
+##### NO.51 N皇后
+
+【分析】皇后之间不能同行，不能同列，且不能同一斜线
+
+不同行不同列 --> 每行每列恰好有一个皇后。（如果只有这个要求就是和NO.46一样的全排列问题，但是本体还有不能同一斜线的要求）
+
+可以用一个 col 的数组来记录，第i行的皇后在第col[i] 列。
+
+用 r 表示行号，用 c 表示列号，则 右上方向的皇后 r+c 是一个定值。假设要在 (2,0) 放皇后，那么之前就不能有r+c=2的皇后，
+
+![1794816658318](LeetCode.assets/1794816658318.png)
+
+同理可得，左上方向的皇后，r-c是一个定值。假设要在(2,3)放皇后，那么之前就不能有 r-c=-1 的皇后
+
+![1794816940248](LeetCode.assets/1794816940248.png)
+
+```python
+class Solution:
+    def solveNQueens(self, n: int) -> list[list[str]]:
+        ans = []
+        col = [0] * n  
+
+        def valid(r,c):
+            for R in range(r):
+                C = col[R]
+                if r + c ==  R+C or r-c == R-C:
+                    return False
+            return True
+
+        # r表示当前要枚举的行号
+        # s表示剩余可以枚举的列号
+        def dfs(r, s):
+            # 所有皇后都记录好了，就把当前这个棋盘记录到答案中
+            if r==n: 
+                # 如果要在第c列放皇后，（C从0开始）
+                # 则前边有c个空格，后边后n-1-c个空格
+                ans.append(['.'*c + 'Q' + '.' * (n-1-c) for c in col])
+                return 
+
+            for c in s:
+                if valid(r,c): 
+                    col[r] = c
+                    dfs(r+1,s-{c})
+                
+        dfs(0, set(range(n)))
+        return ans 
+```
+
+### 动态规划问题
+
+很多动态规划问题依然是 选 或 不选 的问题
+
+##### NO.198 打家劫舍
+
+【分析】
+
+a. 当前操作？枚举第 i 个房子选/不选
+b. 子问题？从前 i 个房子中得到的最大金额和
+c. 下一个子问题？分类讨论：
+          不选：从前 i - 1 个房子中得到的最大金额和
+            选：从前 i - 2 个房子中得到的最大金额和
+
+`dfs(i) = max(dfs(i - 1), dfs(i - 2) + nums[i])`
+
+```python
+class Solution:
+    def rob(self, nums: List[int]) -> int:
+        # 动态规划版本
+        # n = len(nums)
+        # if n == 1:
+        #     return nums[0]
+        # dp = [''] * n
+        # dp[0] = nums[0]
+        # dp[1] = max(dp[0], nums[1])
+        # for i in range(2,n):
+        #     dp[i] = max(dp[i-1], dp[i-2] + nums[i])
+        # return dp[n-1]
+
+        # 回溯版本（时间是指数级别的，这样写会超市）
+        # n = len(nums)
+        # def dfs(i):
+        #     if i<0:
+        #         return 0
+        #     res = max(dfs(i-1), dfs(i-2) + nums[i])
+        #     return res
+        # return dfs(n-1)
 
 
+        # 递推（自底向上计算）
+        # n = len(nums)
+        # f = [0] * (n+2) # 因为这里多用了两个数组空间，因此，不用特殊处理前两个数值
+        # for i,x in enumerate(nums):
+        #     f[i+2] = max(f[i+1], f[i]+x)
+        # return f[n+2]
 
-### 背包问题
+        # 递推的优化，把空间复杂度优化成O(1)
+```
+
+方法1： 使用回溯的思想
+
+这里需要使用记忆化搜索（即在递归搜索的过程中还需要保存计算结果），否则会超时。  自顶向下计算 = 记忆化搜索
+
+时间复杂度：O(n)
+
+```python
+class Solution:
+    def rob(self, nums: List[int]) -> int:
+        n = len(nums)
+        
+        @cache  # 原理是一个hashmap, 记录传入参数和返回值
+        def dfs(i):
+            # 表示没有房子可以选了，直接返回0
+            if i<0:
+                return 0
+            res = max(dfs(i-1), dfs(i-2) + nums[i])  # 状态转移方程
+            return res
+        
+        return dfs(n-1)
+```
+
+```python
+# 或者不使用cache装饰器，用数组来实现
+class Solution:
+    def rob(self, nums: List[int]) -> int:
+        n = len(nums)
+        cache = [-1] * n # 因为答案不可能是负数，所以可以初始化为 -1 
+        def dfs(i):
+            if i<0:
+                return 0
+            if cache[i] != -1: # 如果cache[i]不是-1，说明在之前计算过了
+                return cache[i]
+            else:
+                res = max(dfs(i-1), dfs(i-2) + nums[i])
+                cache[i] = res
+                return res
+        return dfs(n-1)
+```
+
+方法2：对回溯进行优化，使用递推的思想 （自底向上计算=递推）
+
+1:1 翻译成递推  ⎧ dfs → f 数组
+              		⎨ 递归 → 循环
+             		 ⎩ 递归边界 → 数组初始值
+
+`dfs(i) = max(dfs(i - 1), dfs(i - 2) + nums[i])`
+`f[i] = max(f[i - 1], f[i - 2] + nums[i])`
+`f[i + 2] = max(f[i + 1], f[i] + nums[i])`
+
+```python
+class Solution:
+    def rob(self, nums: List[int]) -> int:
+        n = len(nums)
+        f = [0] * (n+2) # 这是为了避免单独处理前两个位置
+
+        for i , x in enumerate(nums):
+            f[i+2] = max(f[i+1],f[i] + x)
+        
+        return f[n+1]
+```
+
+优化：没有必要保存所有结果，计算某处的结果，只需要知道它的前两个状态的结果就可以了
+
+当前 = max(上一个，上上一个 + nums[i])
+
+```python
+class Solution:
+    def rob(self, nums: List[int]) -> int:
+        n = len(nums)
+        f1 = 0 # 上上个位置
+        f2 = 0 # 上个位置
+        for _, x in enumerate(nums):
+            f = max(f2, f1+x)
+            f1 = f2
+            f2 = f
+        return f2
+```
 
 #### 0-1背包
+
+0-1背包问题也可以用选或者不选的思路来进行分析
+
+0-1背包：有 `n` 个物品，第 `i` 个物品的体积为 `w[i]`，价值为 `v[i]`，每个物品至多选一个，求体积和不超过 `capacity` 时的最大价值和（n类物体，每个物体只有1个）
+
+回溯三问进行思考：
+
+a. 当前操作是什么？枚举第 i 个物品选或不选：不选，剩余容量不变；选，剩余容量减少 w[i]
+
+b. 子问题是什么？在剩余容量为 c 时，从前 i 个物品中得到的最大价值和
+c. 下一个子问题？分类讨论：
+		不选：在剩余容量为 c 时，从前 i - 1 个物品中得到的最大价值和
+		选：在剩余容量为 c - w[i] 时，从前 i - 1 个物品中得到的最大价值和
+
+`dfs(i, c) = max(dfs(i - 1, c), dfs(i - 1, c - w[i]) + v[i])`
+
+```python
+# 0-1背包问题
+# capacity: 背包容量
+# w[i]: 第i个物品的体积
+# v[i]: 第i个物品的价值
+# 返回：所选物品体积和不超过capacity的前提下，所能得到的最大价值和
+def zero_one_knapsack(capacity: int, w: List[int], v:List[int]) -> int:
+    n = len(w)
+
+    @cache # 加上这个装饰器，改成记忆化搜索，这样可以节省内存开销
+    def dfs(i,c):
+        # 此时一个物品都没有了，可以直接返回0
+        if i<0:  
+            return  0
+        
+        # 如果这个物品的体积已经超过了最大容量了，只能不选
+        if c<w[i]: 
+            return dfs(i-1,c)  
+        
+        # 背包还有容量放下当前物品，可以进行讨论
+        a = dfs(i-1, c)  # 情况1，我不选当前物品，那么容量不变，在剩余i-1个物品中进行选择
+        b = dfs(i-1, c-w[i]) + v[i]  # 情况2，我选择当前物品，那么当前的价值加上v[i], 当前背包的容量减去w[i], 然后在剩余的i-1个物品中继续选择
+        return max(a,b)  # 返回两种情况的最大值，这样才能保证所选价值是最大的
+    
+    return dfs(n-1, capacity) # 从最后一个物品开始选择，这个时候容量就是初始容量
+```
+
+0-1背包问题的常见变形：
+
+- a. 至多装capacity，求方案数/最大价值和
+- b. 恰好装capacity，求方案数/最大/最小价值和
+- c. 至少装capacity，求方案数/最小价值和
+
+##### NO.494 目标和
+
+【分析】设数组的总和是s, 其中所有添加正号的元素之和是p(即保持原来符号不变), 所有添加负号的元素之和是n, 则 p-n = s, p+n = t, 进行消元，得到 p = (s+t)/2。问题就转换成了，在原数组中找一些元素，使得这些元素的集合正好等于 (s+t)/2, 每个数最多只能选一次（0-1背包）
+
+因为 p 要除以2，所以p一定是偶数；由于数组元素不存在负数，所以s+t一定是正数. 
+
+本题属于0-1背包问题的第二类变形
+
+方法1：记忆化搜索（使用回溯的思想）
+
+```python
+class Solution:
+    def findTargetSumWays(self, nums: list[int], target: int) -> int:
+        n = len(nums)
+        s = sum(nums)
+        p = s+target
+        if p<0 or p%2:  # 如果是负数或者奇数，方案数直接是0，这是不可能的
+            return 0
+        p //= 2
+
+        @cache
+        def dfs(i,c):
+            if i<0:
+                # 没有数字可以选了，需要看最终的 capacity
+                if c == 0: # 这是一个合法的方案，方案数 + 1
+                    return 1
+                else:       # 否则遍历完所有数，这都不是一个合法的方案，方案数是 0
+                    return 0
+                
+            if c < nums[i]:
+                # 当前数字超过了剩余的容量，只能不选
+                return dfs(i-1,c)
+            else:
+                # 当前容量够，可以选择选或者不选，
+                # 因为是求方案数，因此两种方案都要考虑
+                return dfs(i-1,c) + dfs(i-1,c-nums[i])
+        return dfs(n-1,p) # 下标从 0 到 n-1
+```
+
+方法2：使用递推的思想，进一步优化记忆化搜索的空间复杂度
+
+记忆化搜索的思想：`dfs(i,c) = dfs(i-1,c) + dfs(i-1,c-nums[i])`
+
+翻译成递推后：`f[i][c] = f[i-1][c] + f[i-1][c-nums[i]]`  ---下标i+1,避免特殊处理-->`f[i+1][c] = f[i][c] + f[i][c-nums[i]]`
+
+`f[i][j]`: 前 `i` 个数字中，选出和 `j` 的方案数
+
+```python
+class Solution:
+    def findTargetSumWays(self, nums: list[int], target: int) -> int:
+        n = len(nums)
+        s = sum(nums)
+        p = s+target
+        if p<0 or p%2:  # 如果是负数或者奇数，方案数直接是0，这是不可能的
+            return 0
+        p //= 2
+
+        f = [[0] * (p+1) for _ in range(n+1)]  # 数组下标都加了 1 
+        f[0][0] = 1 # i=0,c=0的时候，初始值是1
+
+        for i,x in enumerate(nums):
+            for c in range(p + 1):
+                if c<x:
+                    f[i+1][c] = f[i][c]
+                else:
+                    f[i+1][c] = f[i][c] + f[i][c-x]
+
+        return f[n][p]
+```
+
+对方法2的优化，事实上，每次f[i+1]只和f[i]有关，和之前的没有关系了，所以，每次都可以只用这两个数组
+
+`f[(i + 1)%2][c] = f[i%2][c] + f[i%2][c - w[i]]`
+
+```python
+class Solution:
+    def findTargetSumWays(self, nums: list[int], target: int) -> int:
+        n = len(nums)
+        s = sum(nums)
+        p = s+target
+        if p<0 or p%2:  # 如果是负数或者奇数，方案数直接是0，这是不可能的
+            return 0
+        p //= 2
+
+        f = [[0] * (p+1) for _ in range(2)]  # 数组下标都加了 1 
+        f[0][0] = 1 # i=0,c=0的时候，初始值是1
+
+        for i,x in enumerate(nums):
+            for c in range(p + 1):
+                if c<x:
+                    f[(i+1)%2][c] = f[i%2][c]
+                else:
+                    f[(i+1)%2][c] = f[i%2][c] + f[i%2][c-x]
+
+        return f[n%2][p]
+```
+
+#### 完全背包
+
+完全背包：有 n 种物品，第 i 种物品的体积为 w[i]，价值为 v[i] ，每种物品无限次重复选，求体积和不超过 capacity 时的最大价值和。
+
+回溯三问：
+
+a. 当前操作是什么？枚举第 i 种物品选一个或不选： 不选，剩余容量不变；选一个，剩余容量减少 w[i]
+b. 子问题是什么？在剩余容量为 c 时， 从前 i 种物品中得到的最大价值和
+c. 下一个子问题是什么？分类讨论：
+	不选：在剩余容量为 c 时， 从前 i - 1 种物品中得到的最大价值和
+	选一个：在剩余容量为 c - w[i] 时， 从前 i 种物品中得到的最大价值和
+
+`dfs(i, c) = max(dfs(i - 1, c), dfs(i, c - w[i]) + v[i])`
+
+和 0-1 背包的区别是**，选了一个物品后，i 是不变的，表示你可以继续选第 i 种物品**
+
+##### NO.322 零钱兑换
+
+【分析】这个属于 恰好装capacity，求最小价值和
+
+`dfs(i,c)：`只使用 `coins[0]` 到 `coins[i]` 这几种面额的硬币，凑出剩余金额 `c`，最少需要多少枚硬币。
+
+`i` 表示当前还能使用哪些种类的硬币。
+
+`c` 表示还需要凑出的金额，而不是已经凑出的金额。
+
+```python
+class Solution:
+    def coinChange(self, coins: list[int], amount: int) -> int:
+        n = len(coins)
+
+        @cache
+        def dfs(i,c):
+            if i<0:
+                if c==0:
+                    return 0  # 表示这是一个合法的方案，剩余金额为0，不需额外的任何硬币了，所以需要的硬币数是0
+                else:
+                    return inf
+            if c < coins[i]:  # 如果当前硬币价值比剩余需要的金额更高，只能不选
+                return dfs(i-1,c)
+            else:
+                res = min(dfs(i-1,c), dfs(i,c-coins[i]) + 1)  # 选择当前硬币，所需硬币数就要加 1
+                return res
+        
+        ans = dfs(n-1,amount)
+        return ans if ans < inf else -1
+```
+
+方法2：改成递推的方式
+
+记忆化搜索：`dfs(i,c) = min(dfs(i-1,c), dfs(i,c-coins[i]) + 1)`
+
+递推表达式为：`f[i][c] = min(f[i-1][c] , f[i,c-coins[i]] + 1)`
+
+```python
+class Solution:
+    def coinChange(self, coins: list[int], amount: int) -> int:
+        n = len(coins)
+
+        f = [[inf]*(amount+1) for _ in range(n+1)]
+        f[0][0] = 0 # 此时需要0个硬币
+        
+        for i,x in enumerate(coins):
+            for c in range(amount+1):
+                if c<x: # 如果当前硬币价值比剩余需要的金额更高，只能不选
+                    f[i+1][c] = f[i][c]
+                else:
+                    f[i+1][c] = min(f[i][c], f[i+1][c-x] + 1)
+        ans = f[n][amount]
+        return ans if ans < inf else -1
+```
+
+ 
 
 NO.416 分割等和子集
 
