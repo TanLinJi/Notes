@@ -82,16 +82,16 @@ NO. 162 [寻找峰值](https://leetcode.cn/problems/find-peak-element/)  (红蓝
 class Solution:
     def findPeakElement(self, nums: list[int]) -> int:
          # 定义rihgt为峰顶或者峰顶右侧元素所在位置
-         left = 0
-         right = len(nums) - 2
-         while left <= right:
+        left = 0
+        right = len(nums) - 2
+        while left <= right:
             mid = (left + right) // 2
             if nums[mid] > nums[mid + 1]:
                 right = mid - 1
             else:
                 left = mid + 1
 
-         return left
+        return left
 ```
 
 
@@ -367,54 +367,6 @@ dp[i][j]可以从哪几个方向推导出来：
 
 
 
-### No.1143 [最长公共子序列（LCS）](https://leetcode.cn/problems/longest-common-subsequence/)
-
-在算法题中，子数组和子串是连续的，但是子序列是可以不连续的
-
-```python
-class Solution:
-    def longestCommonSubsequence(self, text1: str, text2: str) -> int:
-        n = len(text1)
-        m = len(text2)
-
-        @cache
-        def dfs(i, j):
-            # 其中一个字符串为空
-            if i<0 or j<0:
-                return 0
-            
-            # 如果此时两个字符相等，可以继续看两者剩余的
-            if text1[i] == text2[j]:
-                 return dfs(i-1, j-1) + 1
-            # 如果不等，分别移动各自的指针, 因为是求最长，所以是取最大值
-            else:
-                return max(dfs(i-1,j), dfs(i, j-1))
-        
-        return dfs(n-1, m-1)
-
-```
-
-法2：改用递推的形式来做
-
-```python
-class Solution:
-    def longestCommonSubsequence(self, text1: str, text2: str) -> int:
-        n = len(text1)
-        m = len(text2)
-
-        f = [[0] * (m+1) for _ in range(n+1)]  # m+1列，n+1行
-
-        for i,x in enumerate(text1):
-            for j,y in enumerate(text2):
-                if x == y:
-                    f[i+1][j+1] = f[i][j] + 1
-                else:
-                    f[i+1][j+1] = max(f[i][j+1], f[i+1][j])
-
-        
-        return f[n][m]
-```
-
 ### NO.72 [编辑距离](https://leetcode.cn/problems/edit-distance/)
 
 ```
@@ -475,17 +427,7 @@ word1[2] = "c"
 word2[2] = "d"
 ```
 
-两个字符不同。
-
-我们可以把 `word1` 最后一个字符 `"c"` 替换为 `"d"`。
-
-abc
-
-abd
-
-将 c 替换为 d
-
-
+两个字符不同。我们可以把 `word1` 最后一个字符 `"c"` 替换为 `"d"`。即 abc --> abd`
 
 替换最后一个字符后，剩下的问题是：
 
@@ -599,77 +541,6 @@ dfs(1, 2)
 
 
 
-法2，递推
-
-```python
-class Solution:
-    def minDistance(self, word1: str, word2: str) -> int:
-        n = len(word1)
-        m = len(word2)
-
-        f = [[inf] * (m+1) for _ in range(n+1)]
-        # 注意初始化
-        # f[0][j] 都应该为 j
-        # f[i][0] 都应该为 i
-        f[0] = list(range(m+1))
-        for i,x in enumerate(word1):
-            f[i+1][0] = i+1 # 这是初始化（因为这里下标是加了1）
-            for j,y in enumerate(word2):
-                if x == y:
-                    f[i+1][j+1] = f[i][j]
-                else:
-                    f[i+1][j+1] = min(f[i+1][j],f[i][j+1],f[i][j]) + 1
-        return f[n][m]        
-```
-
-
-
-### No. 300 [最长递增子序列](https://leetcode.cn/problems/longest-increasing-subsequence/)
-
-用递推的思想来解决：
-
-```python
-class Solution:
-    def lengthOfLIS(self, nums: list[int]) -> int:
-        n = len(nums)
-
-        # dfs(i) 表示以 nums[i] 结尾的最长递增子序列的长度
-        @cache
-        def dfs(i):
-            res = 0
-            for j in range(i):
-                if nums[j] < nums[i]:
-                    res = max(res, dfs(j))
-            return res + 1 # 这里的 1 就表示nums[i]
-        
-        ans = 0
-
-        for i in range(n):
-            ans = max(ans, dfs(i))
-
-        return ans
-
-```
-
-使用动态规划进行优化:
-
-```python
-class Solution:
-    def lengthOfLIS(self, nums: list[int]) -> int:
-        n = len(nums)
-
-        f = [0] * n
-        
-        for i in range(n):
-            for j in range(i):
-                if nums[j] < nums[i]:
-                    f[i] = max(f[i], f[j])
-            f[i] += 1
-    
-        return max(f)
-
-```
-
 
 
 # 定长滑动窗口
@@ -677,10 +548,6 @@ class Solution:
 ### NO.1456 [定长子串中元音的最大数目](https://leetcode.cn/problems/maximum-number-of-vowels-in-a-substring-of-given-length/)
 
 【分析】子串要求字符在原字符串中连续出现，并且保持原来的顺序。
-
-```python
-
-```
 
 
 
@@ -988,7 +855,7 @@ class Solution:
         return ans-1 # 必须删除一个元素，因此减 1 (删除那个0)
 ```
 
-##### No.3643 使数组平衡的最少移除数目
+##### NO.3643 使数组平衡的最少移除数目
 
 【解析】本题的关键是对题目信息进行转换：删除最少的元素，让数组平衡。可以转换成：寻找最多能够保留多少个元素，使得最大值不超过最小值的 k 倍。
 
@@ -2141,6 +2008,288 @@ class Solution:
 ```
 
  
+
+#### 线性DP
+
+##### NO.1143 最长公共子序列(LCS)
+
+【分析】默认情况下：子数组和子串是连续的，自序列不一定是连续的
+
+子序列本质上就是选或不选的问题；考虑最后一对字母 x 和 y：就有不选 x ，不选 y；不选 x，选 y；选 x，不选 y；选 x，选 y；四种，因此，回溯三问：
+
+a. 当前操作是什么？考虑 s[i] 和 t[j] 选或不选
+
+b. 子问题是什么？s 的前 i 个字母和 t 的前 j 个字母的LCS长度
+
+c. 下一个子问题是什么？
+
+​	s 的前 i - 1 个字母和 t 的前 j - 1 个字母的 LCS 长度
+​	s 的前 i - 1 个字母和 t 的前 j 个字母的 LCS 长度
+​	s 的前 i 个字母和 t 的前 j - 1 个字母的 LCS 长度
+
+考虑两个问题：
+
+a. 若 s[i] = t[j] , 是否需要考虑只选其中一个的情况？答案：不用考虑，此时应该都选
+
+b. 若 s[i] ≠ t[j]，是否需要考虑都不选的情况？答案：不用考虑，不等的时候，应该分别固定一个指针，移动另外一个指针
+
+```python
+class Solution:
+    def longestCommonSubsequence(self, text1: str, text2: str) -> int:
+        n = len(text1)
+        m = len(text2)
+
+        @cache
+        def dfs(i,j):
+            if i<0 or j<0:
+                return 0
+            
+            # 两个字母相等，都选
+            if text1[i] == text2[j]:
+                return dfs(i-1,j-1) + 1
+            
+            # 两个字母不等，分情况讨论
+            # 选 text1[i], 不选 text2[j]
+            a = dfs(i,j-1)
+
+            # 不选 text1[i], 选 text2[j]
+            b = dfs(i-1, j)
+
+            return max(a,b)
+        
+        return dfs(n-1,m-1)
+```
+
+方法2 从记忆化搜索改成递推
+
+注意：f 的初始化，第一行第一列应该全为 0（代表有一个字符串为空的时候，他们的LCS就是0）
+
+```python
+class Solution:
+    def longestCommonSubsequence(self, text1: str, text2: str) -> int:
+        n = len(text1)
+        m = len(text2)
+
+        f = [[0]*(m+1) for _ in range(n+1)]
+        
+        for i,x in enumerate(text1):
+            for j,y in enumerate(text2):
+                if x==y:
+                    f[i+1][j+1] = f[i][j] + 1
+                else:
+                    f[i+1][j+1] = max(f[i][j+1],f[i+1][j])
+        
+        return f[n][m]
+```
+
+##### NO.72 编辑距离
+
+【解析】注意终止条件，和NO.1143的区别；分析方式和NO.1143是一样的
+
+`dfs(i, j)` 表示：将 `word1` 的前 `i+1` 个字符转换为 `word2` 的前 `j+1` 个字符，所需要的最少操作次数。
+
+```python
+class Solution:
+    def minDistance(self, word1: str, word2: str) -> int:
+        n = len(word1)
+        m = len(word2)
+
+        @cache
+        def dfs(i,j):
+            # 注意终止条件
+            if i<0:
+                return j+1  # word1剩余为空，word2剩余不为空，需要新增j+1个字母
+            if j<0:
+                return i+1  # word1 剩余不为空，但是word2剩余为空了，需要把word1剩余的全部删除
+
+            # 如果此时两个字符相等，直接看前边的字符
+            if word1[i] == word2[j]:
+                return dfs(i-1,j-1)
+            # 否则，需要分类讨论
+            else:
+                # a.插入一个字符在word1中，这个新插入的字符应该和此时word2[j]相等，所以j前移
+                a = dfs(i,j-1) + 1
+
+                # b. 删除word1[i], 那么应该 i 指针前移，继续看上一个字符
+                b = dfs(i-1, j) + 1
+
+                # c. 替换掉word1[i], 此时替换后，两个字符相等，都应该前移
+                c = dfs(i-1, j-1) + 1
+
+                return min(a,b,c)
+        
+        return dfs(n-1,m-1)
+```
+
+方法2：将记忆化搜索的方式改成递推
+
+【分析】改成递推后，一定要注意 dp 数组的初始化方式
+
+```python
+class Solution:
+    def minDistance(self, word1: str, word2: str) -> int:
+        n = len(word1)
+        m = len(word2)
+
+        f = [[0]*(m+1) for _ in range(n+1)]
+        # 需要初始化
+        # 如果word1为空，也就是f[0][j]的情况，需要插入这么多 :    简单写法：f[0] = list(range(m+1)) 表示f[0][j] = j
+        for j in range(m+1):
+            f[0][j] = j
+        # 如果word2为空，也就是f[i][0]的情况，需要删除这么多
+        for i in range(n+1):
+            f[i][0] = i
+        
+        for i,x in enumerate(word1):
+            # f[i+1][0] = i+1 # 这是初始化（因为这里下标是加了1），也可以把 f[i][0] s的初始化方式写在这里
+            for j,y in enumerate(word2):
+                if x==y:
+                    f[i+1][j+1] = f[i][j]
+                else:
+                    f[i+1][j+1] = min(f[i+1][j], f[i][j+1],f[i][j]) + 1
+        
+        return f[n][m]
+```
+
+##### NO.300 最长递增子序列(LIS)
+
+【分析】
+
+定义 `dfs(i)`: 表示以 `nums[i]` 结尾的 `LIS` 长度；这里的 `dfs(i)` 有一个强制条件：必须选择 `nums[i]`**，**并且它必须是当前子序列的最后一个元素**。**
+
+注意：这里没有写边界条件，因为当 `i = 0` 的时候，`dfs` 中的循环是不会执行的，因此也就不会继续下去
+
+然后，最终答案不一定以最后一个数组元素结尾，所以需要枚举所有结束位置。
+
+在 `nums[i]` 前面，这个数需要满足的条件：1. 这个数必须在 `nums[i]` 前边  2. 这个数必须小于 `nums[i]`
+
+启发思路：枚举 `nums[i]` 作为 LIS 的末尾元素，那么需要枚举 `nums[j]` 作为 LIS 倒数第二个元素，其中 `j < i` 且 `nums[j] < nums[i]`
+
+回溯三问：
+
+​	a. 子问题？以 `nums[i]` 结尾的 LIS 长度
+
+​	b. 当前操作？枚举 `nums[j]`
+​	c. 下一个子问题？以 `nums[j]` 结尾的 LIS 长度
+
+```python
+class Solution:
+    def lengthOfLIS(self, nums: list[int]) -> int:
+        n = len(nums)
+
+        @cache
+        def dfs(i):
+            # 以nums[i]结尾，至少能够选自己
+            res = 1
+            
+            # 枚举 i 前边的数 j
+            for j in range(i):
+                if nums[j] < nums[i]:
+                    res = max(res, dfs(j) + 1)  # 核心：LIS的状态转移方程，这里的 1 表示 nums[i]
+            return res 
+        
+        ans = 0
+        # 枚举以 nums[i] 为子数组的结尾数字
+        for i in range(n):
+            ans = max(ans,dfs(i))
+        
+        return ans
+```
+
+方法2：将记忆化搜索改成递推
+
+`dfs(i) = max {dfs(j)} + 1`    `j < i` 且 `nums[j] < nums[i]`
+
+`f[i] = max {f[j]} + 1`        `j < i` 且 `nums[j] < nums[i]`
+
+```python
+class Solution:
+    def lengthOfLIS(self, nums: list[int]) -> int:
+        n = len(nums)
+        f = [0] * n
+
+        for i in range(n):
+            for j in range(i):
+                if nums[j] < nums[i]:
+                    f[i] = max(f[i], f[j])
+            f[i] += 1 # 找到后里边加 1 （这个 1 就是 nums[i]）
+        
+        return max(f)
+```
+
+##### NO.674 最长连续递增序列
+
+【分析】本题要求子序列是连续的，所以更简单
+
+```python
+class Solution:
+    def findLengthOfLCIS(self, nums: list[int]) -> int:
+        n = len(nums)
+        f = [1] * n
+
+        for i in range(1,n):
+            if nums[i] > nums[i-1]:
+                f[i] = f[i-1] + 1
+            else:
+                f[i] = 1
+
+        return max(f)
+```
+
+优化：f[i]事实上只依赖于前一个f[i-1], 因此不用完整存储
+
+```python
+class Solution:
+    def findLengthOfLCIS(self, nums: list[int]) -> int:
+        n = len(nums)
+        f = 1
+        ans = 1
+
+        for i in range(1,n):
+            if nums[i] > nums[i-1]:
+                f += 1
+                ans = max(ans,f)
+            else:
+                f = 1
+
+        return ans
+```
+
+##### NO.673 最长递增子序列的个数
+
+【分析】和NO.300的区别，这里不仅要求最长递增子序列，还要求这样的序列的个数，所以需要统计对应每个递增子序列长度的个数
+`f[i]`：以 `nums[i]` 结尾的最长递增子序列长度
+`cnt[i]`：以 `nums[i]` 结尾，且长度为 `f[i]` 的子序列数量
+
+也就是说`f[i]`负责记录最长有多长，`cnt[i]` 负责记录达到这个最长长度的方案有多少条。
+
+```python
+class Solution:
+    def findNumberOfLIS(self, nums: list[int]) -> int:
+        n = len(nums)
+        # 最长长度
+        f = [1] * n
+        # 达到最长长度的方案数
+        cnt = [1] * n
+
+        for i in range(n):
+            for j in range(i):
+                if nums[j] < nums[i]:
+                    # 找到了更长的序列
+                    if f[j] + 1 > f[i]:
+                        f[i] = f[j] + 1
+                        cnt[i] = cnt[j]
+                    # 找到了同样长的序列
+                    elif f[j] + 1 == f[i]:
+                        cnt[i] += cnt[j]
+
+        mx = max(f)
+
+        return sum(
+            cnt[i] for i in range(n)
+            if f[i] == mx
+        )
+```
 
 NO.416 分割等和子集
 
